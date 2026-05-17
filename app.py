@@ -383,6 +383,7 @@ with st.sidebar:
         "Optional YouTube URL or local file path",
         placeholder="https://youtube.com/watch?v=...",
     )
+    st.caption("YouTube URL processing is best-effort on shared cloud hosting. Uploads are most reliable.")
 
     language = st.selectbox(
         "Language",
@@ -448,7 +449,15 @@ if run_btn:
 
             except Exception as e:
                 release_quota(user_id)
-                st.error(f"Processing failed: {e}")
+                err = str(e)
+                if source.startswith(("http://", "https://")) and "YouTube download failed" in err:
+                    st.error(
+                        "YouTube downloads may fail on cloud deployments due to "
+                        "YouTube restrictions on shared server IPs. "
+                        "Please upload the meeting file directly for reliable processing."
+                    )
+                else:
+                    st.error(f"Processing failed: {err}")
 
 
 # ── Results ────────────────────────────────────────────────────────────────────

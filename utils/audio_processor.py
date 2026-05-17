@@ -64,6 +64,7 @@ def _run_ffmpeg(command: list[str]) -> None:
 def download_yt_audio(url:str)->str:
     output_path = os.path.join(DOWNLOAD_DIR,"%(title)s.%(ext)s")
     ffmpeg_path = _ffmpeg_binary()
+    cookiefile = os.getenv("YTDLP_COOKIEFILE", "").strip()
 
     ytk_opts = {
         "format" : "bestaudio/best",
@@ -71,6 +72,11 @@ def download_yt_audio(url:str)->str:
         "quiet" : True,
         "noplaylist": True,
         "ffmpeg_location": os.path.dirname(ffmpeg_path),
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        },
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 "
@@ -81,6 +87,9 @@ def download_yt_audio(url:str)->str:
             )
         },
     }
+
+    if cookiefile and os.path.exists(cookiefile):
+        ytk_opts["cookiefile"] = cookiefile
 
     try:
         with yt_dlp.YoutubeDL(ytk_opts) as ydl:

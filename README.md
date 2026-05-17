@@ -125,6 +125,12 @@ For stronger persistence in production, move usage/vector metadata to managed se
 
 YouTube downloads may also fail intermittently on shared cloud IPs due to provider anti-bot/network policies. The app is designed so upload-based processing is the reliable primary path.
 
+The YouTube downloader is configured with:
+- modern `yt-dlp`
+- browser-like headers
+- `extractor_args` using YouTube `player_client=android`
+- optional cookiefile support via `YTDLP_COOKIEFILE` (not recommended for public deployments)
+
 ### Secrets
 
 Do not commit:
