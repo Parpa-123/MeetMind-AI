@@ -374,8 +374,13 @@ with st.sidebar:
         <div class="mi-sidebar-sub">AI transcription · summary · retrieval</div>
     """, unsafe_allow_html=True)
 
+    uploaded_file = st.file_uploader(
+        "Upload meeting audio/video (recommended)",
+        type=["mp3", "mp4", "wav", "m4a", "webm", "mov", "mpeg"],
+    )
+
     source = st.text_input(
-        "Video URL or file path",
+        "Optional YouTube URL or local file path",
         placeholder="https://youtube.com/watch?v=...",
     )
 
@@ -403,8 +408,9 @@ st.markdown("""
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────
 if run_btn:
-    if not source.strip():
-        st.error("Please provide a valid YouTube URL or local file path.")
+    source = source.strip()
+    if not uploaded_file and not source:
+        st.error("Please upload a file or provide a valid YouTube URL/local file path.")
     else:
         reserved = reserve_quota(user_id)
         if not reserved:
@@ -412,7 +418,13 @@ if run_btn:
         else:
             try:
                 with st.spinner("Processing meeting…"):
-                    chunks       = process_input(source)
+                    upload_name = uploaded_file.name if uploaded_file else None
+                    upload_bytes = uploaded_file.getvalue() if uploaded_file else None
+                    chunks       = process_input(
+                        source=source,
+                        uploaded_file_name=upload_name,
+                        uploaded_file_bytes=upload_bytes,
+                    )
                     transcript   = transcribe_all(chunks, language)
                     title        = generate_title(transcript)
                     summary      = summarize(transcript)
@@ -580,9 +592,9 @@ else:
     st.markdown("""
         <div class="mi-empty">
             <div style="font-size:2.5rem;margin-bottom:1rem">🎙️</div>
-            <div class="mi-empty-title">Upload or paste a meeting source</div>
+            <div class="mi-empty-title">Upload meeting audio/video</div>
             <div class="mi-empty-sub">
-                Provide a YouTube URL or local recording path in the sidebar
+                Upload a file from your device, or optionally provide a YouTube URL/local path in the sidebar
                 to generate transcripts, summaries, action items and contextual chat.
             </div>
         </div>

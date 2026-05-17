@@ -19,7 +19,8 @@ A Streamlit app that turns meeting audio/video into:
 
 ## Features
 
-- Input: YouTube URL or local file path
+- Input (recommended): file upload (audio/video)
+- Optional fallback: YouTube URL or local file path
 - Auto conversion/chunking with FFmpeg
 - Two language modes:
   - `english` -> Groq Whisper
@@ -122,6 +123,8 @@ That means these may reset:
 
 For stronger persistence in production, move usage/vector metadata to managed services (for example Postgres/Supabase + hosted vector DB).
 
+YouTube downloads may also fail intermittently on shared cloud IPs due to provider anti-bot/network policies. The app is designed so upload-based processing is the reliable primary path.
+
 ### Secrets
 
 Do not commit:
@@ -139,4 +142,3 @@ Already covered in `.gitignore`.
   - Ensure dependency is listed in `requirements.txt`.
 - Limit reached unexpectedly
   - Check current month rows in `usage.db` table `usage`.
-

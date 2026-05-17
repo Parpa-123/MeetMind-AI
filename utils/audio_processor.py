@@ -1,9 +1,12 @@
 import glob
 import os
+import re
 import shutil
 import subprocess
+from uuid import uuid4
 
 import yt_dlp
+from yt_dlp.utils import DownloadError
 
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR,exist_ok=True)
@@ -68,23 +71,39 @@ def download_yt_audio(url:str)->str:
         "quiet" : True,
         "noplaylist": True,
         "ffmpeg_location": os.path.dirname(ffmpeg_path),
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 "
+                "(Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 "
+                "(KHTML, like Gecko) "
+                "Chrome/124.0 Safari/537.36"
+            )
+        },
     }
 
-    with yt_dlp.YoutubeDL(ytk_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
+    try:
+        with yt_dlp.YoutubeDL(ytk_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+    except DownloadError as exc:
+        raise RuntimeError(
+            "YouTube download failed. This often happens on cloud deployments where "
+            "shared datacenter IPs are blocked by YouTube. Please upload an audio/video "
+            "file directly or try another video."
+        ) from exc
 
     if os.path.exists(filename):
         return filename
 
     # Fallback for edge cases where yt-dlp sanitizes names unexpectedly.
     candidates = sorted(
-        glob.glob(os.path.join(DOWNLOAD_DIR, "*.wav")),
+        glob.glob(os.path.join(DOWNLOAD_DIR, "*.*")),
         key=os.path.getmtime,
         reverse=True,
     )
     if not candidates:
-        raise RuntimeError("YouTube audio download completed, but no WAV file was found.")
+        raise RuntimeError("YouTube audio download completed, but no media file was found.")
 
     filename = candidates[0]
     return filename
@@ -145,16 +164,43 @@ def chunk_audio(wav_path : str,chunk_min : int =10) -> list:
 
     return chunks
 
-def process_input(source : str) -> list:
-    if source.startswith("http://") or source.startswith("https://"):
+def _sanitize_filename(name: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("._")
+    return cleaned or "uploaded_media"
+
+
+def save_uploaded_media(file_name: str, file_bytes: bytes) -> str:
+    safe_name = _sanitize_filename(file_name)
+    unique_name = f"{uuid4().hex[:10]}_{safe_name}"
+    output_path = os.path.join(DOWNLOAD_DIR, unique_name)
+
+    with open(output_path, "wb") as f:
+        f.write(file_bytes)
+
+    return output_path
+
+
+def process_input(
+    source: str = "",
+    uploaded_file_name: str | None = None,
+    uploaded_file_bytes: bytes | None = None,
+) -> list:
+    source = (source or "").strip()
+
+    if uploaded_file_name and uploaded_file_bytes:
+        print("Detected uploaded file. Saving and converting to WAV...")
+        uploaded_path = save_uploaded_media(uploaded_file_name, uploaded_file_bytes)
+        wav_path = convert_to_wav(uploaded_path)
+    elif source.startswith("http://") or source.startswith("https://"):
         print("Detected Youtube URL. Downloading URL...")
         downloaded_path = download_yt_audio(source)
         print("Converting downloaded audio to WAV...")
         wav_path = convert_to_wav(downloaded_path)
-
-    else:
+    elif source:
         print("Deteted Local File. Converting to WAV...")
         wav_path = convert_to_wav(source)
+    else:
+        raise RuntimeError("No valid input provided. Upload a file or provide a URL/path.")
 
     print("Chunking Audio...")
 
