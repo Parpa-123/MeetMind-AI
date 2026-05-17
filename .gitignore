@@ -1,0 +1,72 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+
+# =========================
+# Streamlit Secrets
+# =========================
+.streamlit/secrets.toml
+
+# =========================
+# SQLite Databases
+# =========================
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+
+# =========================
+# ChromaDB / Vector DB
+# =========================
+vector_db/
+chroma_db/
+*.parquet
+
+# =========================
+# Downloads / Uploaded Files
+# =========================
+downloads/
+uploads/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# VSCode
+# =========================
+.vscode/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Build / Cache
+# =========================
+.cache/
+.pytest_cache/
+.mypy_cache/
