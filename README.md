@@ -1,150 +1,201 @@
-# AI Meeting Assistant
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetMind AI</title>
+</head>
 
-A Streamlit app that turns meeting audio/video into:
-- transcript
-- title + summary
-- action items
-- key decisions
-- open questions
-- chat over the meeting transcript (RAG)
+<body>
 
-## Stack
+  <h1>MeetMind AI</h1>
 
-- Streamlit
-- ChromaDB (local vector store)
-- SQLite (hard monthly usage limits)
-- Groq Whisper (English transcription)
-- Sarvam STT (Hinglish transcription)
-- Mistral (summary/extraction/RAG answers via LangChain)
+  <p>
+    MeetMind AI is an intelligent multilingual meeting assistant that transforms
+    meeting audio and video into structured, searchable knowledge using modern
+    LLM and Retrieval-Augmented Generation (RAG) pipelines.
+  </p>
 
-## Features
+  <p>
+    The system supports transcription, summarization, action item extraction,
+    key decision tracking, open question identification, and contextual chat
+    over meeting transcripts.
+  </p>
 
-- Input (recommended): file upload (audio/video)
-- Optional fallback: YouTube URL or local file path
-- Auto conversion/chunking with FFmpeg
-- Two language modes:
-  - `english` -> Groq Whisper
-  - `hinglish` -> Sarvam STT
-- RAG chat grounded in transcript context
-- Hard quota enforcement:
-  - 4 successful requests per user per month
-  - enforced server-side in SQLite
-  - failure-safe (failed requests do not consume quota)
+  <hr />
 
-## Project Structure
+  <h2>Live Demo</h2>
 
-```text
+  <p>
+    <a href="https://meetmind-ai-hmg7njl33spfqt2snguyyf.streamlit.app/" target="_blank">
+      Launch MeetMind AI
+    </a>
+  </p>
+
+  <hr />
+
+  <h2>Core Features</h2>
+
+  <ul>
+    <li>Multilingual AI transcription</li>
+    <li>Meeting summarization</li>
+    <li>Action item extraction</li>
+    <li>Key decision tracking</li>
+    <li>Open question identification</li>
+    <li>RAG-powered conversational chat</li>
+    <li>YouTube and file upload support</li>
+    <li>Server-side quota enforcement</li>
+  </ul>
+
+  <hr />
+
+  <h2>Technology Stack</h2>
+
+  <ul>
+    <li>Streamlit</li>
+    <li>ChromaDB</li>
+    <li>SQLite</li>
+    <li>LangChain</li>
+    <li>Groq Whisper</li>
+    <li>Sarvam STT</li>
+    <li>Mistral AI</li>
+    <li>FFmpeg</li>
+    <li>yt-dlp</li>
+  </ul>
+
+  <hr />
+
+  <h2>Architecture Overview</h2>
+
+  <pre>
+Audio / Video Input
+        ↓
+Speech-to-Text Pipeline
+(Groq Whisper / Sarvam STT)
+        ↓
+Transcript Processing
+        ↓
+LLM Extraction Pipeline
+ ├── Summary
+ ├── Action Items
+ ├── Key Decisions
+ └── Open Questions
+        ↓
+Embedding Generation
+        ↓
+ChromaDB Vector Store
+        ↓
+RAG Conversational Retrieval
+  </pre>
+
+  <hr />
+
+  <h2>Project Structure</h2>
+
+  <pre>
 project/
-├── app.py                 # Streamlit UI + orchestration
-├── main.py                # CLI pipeline entry
-├── usage.py               # Hard monthly quota logic (SQLite)
+├── app.py
+├── main.py
+├── usage.py
 ├── core/
-│   ├── transcriber.py     # Groq/Sarvam transcription routing
-│   ├── summarize.py       # Meeting title + summary
-│   ├── extractor.py       # Actions/decisions/questions extraction
-│   ├── rag_engine.py      # RAG chain + query
-│   └── vector_store.py    # Chroma vector store build/load
+│   ├── transcriber.py
+│   ├── summarize.py
+│   ├── extractor.py
+│   ├── rag_engine.py
+│   └── vector_store.py
 ├── utils/
-│   ├── audio_processor.py # download/convert/chunk
+│   ├── audio_processor.py
 │   └── runtime_setup.py
-├── downloads/             # temporary media/audio files
-├── vector_db/             # Chroma persistence directory
+├── downloads/
+├── vector_db/
 ├── requirements.txt
 └── .gitignore
-```
+  </pre>
 
-## Prerequisites
+  <hr />
 
-- Python 3.10+
-- FFmpeg available via one of:
-  - system PATH
-  - `FFMPEG_LOCATION` env var
-  - `imageio-ffmpeg` fallback (already in requirements)
+  <h2>Installation</h2>
 
-## Environment Variables
+  <pre>
+pip install -r requirements.txt
+  </pre>
 
-Create a `.env` file in project root:
+  <hr />
 
-```env
+  <h2>Run Application</h2>
+
+  <h3>Streamlit App</h3>
+
+  <pre>
+streamlit run app.py
+  </pre>
+
+  <h3>CLI Mode</h3>
+
+  <pre>
+python main.py
+  </pre>
+
+  <hr />
+
+  <h2>Environment Variables</h2>
+
+  <pre>
 GROQ_API_KEY=your_groq_api_key
 MISTRAL_API_KEY=your_mistral_api_key
 SARVAM_API_KEY=your_sarvam_api_key
 
-# Optional
 SARVAM_STT_MODEL=saaras:v2.5
 FFMPEG_LOCATION=
-```
+  </pre>
 
-## Installation
+  <hr />
 
-```bash
-pip install -r requirements.txt
-```
+  <h2>Usage Limits</h2>
 
-## Run
+  <p>
+    MeetMind AI enforces secure server-side monthly quotas using SQLite.
+  </p>
 
-Streamlit app:
+  <ul>
+    <li>4 successful requests per user per month</li>
+    <li>Failure-safe transaction workflow</li>
+    <li>Failed requests do not consume quota</li>
+  </ul>
 
-```bash
-streamlit run app.py
-```
+  <hr />
 
-CLI mode:
+  <h2>Deployment Notes</h2>
 
-```bash
-python main.py
-```
+  <p>
+    The application is optimized for Streamlit Community Cloud deployment.
+  </p>
 
-## Hard Rate Limits (Mandatory)
+  <p>
+    YouTube downloads may occasionally fail on shared cloud infrastructure
+    because of provider anti-bot restrictions. File uploads are the recommended
+    primary workflow for stable processing.
+  </p>
 
-Quota is implemented in `usage.py` using SQLite transactions.
+  <hr />
 
-- Monthly limit: `4`
-- Scope: per resolved `user_id`
-- Workflow:
-  - `reserve_quota(user_id)` before expensive processing
-  - `commit_quota(user_id)` only after successful response
-  - `release_quota(user_id)` on exception
+  <h2>Use Cases</h2>
 
-This prevents race conditions and avoids charging failed requests.
+  <ul>
+    <li>Team meeting intelligence</li>
+    <li>Interview summarization</li>
+    <li>Lecture transcription</li>
+    <li>Webinar analysis</li>
+    <li>Knowledge retrieval systems</li>
+  </ul>
 
-If no authenticated identity is present in `st.session_state`, the app falls back to a generated guest session id.
+  <hr />
 
-## Deployment Notes
+  <h2>License</h2>
 
-### Streamlit Community Cloud
+  <p>
+    This project is intended for educational, research, and portfolio purposes.
+  </p>
 
-Works well for demos, but local filesystem persistence is not guaranteed across restarts/redeploys.
-
-That means these may reset:
-- `usage.db`
-- `vector_db/`
-- `downloads/`
-
-For stronger persistence in production, move usage/vector metadata to managed services (for example Postgres/Supabase + hosted vector DB).
-
-YouTube downloads may also fail intermittently on shared cloud IPs due to provider anti-bot/network policies. The app is designed so upload-based processing is the reliable primary path.
-
-The YouTube downloader is configured with:
-- modern `yt-dlp`
-- browser-like headers
-- `extractor_args` using YouTube `player_client=android`
-- optional cookiefile support via `YTDLP_COOKIEFILE` (not recommended for public deployments)
-
-### Secrets
-
-Do not commit:
-- `.env`
-- `.streamlit/secrets.toml`
-- `usage.db`
-
-Already covered in `.gitignore`.
-
-## Troubleshooting
-
-- `FFmpeg executable not found`
-  - Install FFmpeg or set `FFMPEG_LOCATION`.
-- `ModuleNotFoundError` during deploy
-  - Ensure dependency is listed in `requirements.txt`.
-- Limit reached unexpectedly
-  - Check current month rows in `usage.db` table `usage`.
+</body>
+</html>
