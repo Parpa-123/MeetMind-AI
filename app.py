@@ -1,5 +1,7 @@
 import streamlit as st
 from dotenv import load_dotenv
+import html
+import re
 from uuid import uuid4
 
 from utils.runtime_setup import configure_runtime
@@ -363,6 +365,41 @@ def resolve_user_id() -> str:
     return st.session_state.guest_user_id
 
 
+def _normalize_chat_content(content: str) -> str:
+    """Normalize LLM chat output so UI wrapper markup does not leak into messages."""
+    text = str(content or "").strip()
+
+    # Unwrap single fenced blocks that sometimes contain rendered HTML wrappers.
+    fence_match = re.match(r"^```(?:html|markdown|text)?\s*([\s\S]*?)\s*```$", text)
+    if fence_match:
+        text = fence_match.group(1).strip()
+
+    # Remove accidental wrapper tags if the model echoes UI markup.
+    text = re.sub(
+        r'<div class="mi-sender">\s*(?:Assistant|You)\s*</div>',
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r'</?div class="mi-msg-(?:ai|user)"\s*>',
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(r"</?div\s*>", "", text, flags=re.IGNORECASE)
+
+    # Normalize spacing and preserve line breaks for display.
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    return text
+
+
+def _render_safe_chat_html(content: str) -> str:
+    """Escape chat text for HTML containers while preserving line breaks."""
+    normalized = _normalize_chat_content(content)
+    return html.escape(normalized).replace("\n", "<br>")
+
+
 user_id = resolve_user_id()
 remaining = remaining_quota(user_id)
 
@@ -536,18 +573,19 @@ if st.session_state.result:
         if st.session_state.chat_history:
             chat_html = '<div class="mi-chat-wrap">'
             for msg in st.session_state.chat_history:
+                safe_content = _render_safe_chat_html(msg.get("content", ""))
                 if msg["role"] == "user":
                     chat_html += f"""
                         <div class="mi-msg-user">
                             <div class="mi-sender">You</div>
-                            {msg["content"]}
+                            {safe_content}
                         </div>
                     """
                 else:
                     chat_html += f"""
                         <div class="mi-msg-ai">
                             <div class="mi-sender">Assistant</div>
-                            {msg["content"]}
+                            {safe_content}
                         </div>
                     """
             chat_html += "</div>"
@@ -587,7 +625,7 @@ if st.session_state.result:
                     })
                     st.session_state.chat_history.append({
                         "role": "assistant",
-                        "content": response,
+                        "content": _normalize_chat_content(response),
                     })
                     st.rerun()
 
